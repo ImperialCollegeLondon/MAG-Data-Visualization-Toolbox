@@ -40,6 +40,28 @@ classdef (Abstract) TimeSeries < mag.Data & mag.mixin.Crop & mag.mixin.Signal
         end
     end
 
+    methods (Sealed)
+
+        function value = isPlottable(this)
+
+            arguments
+                this (1, :) mag.TimeSeries
+            end
+
+            if isempty(this)
+
+                value = false;
+                return;
+            end
+
+            value = false(size(this));
+
+            for i = 1:numel(this)
+                value(i) = this(i).HasData && (height(this(i).Data) > 1);
+            end
+        end
+    end
+
     methods (Static, Access = protected)
 
         function dx = computeDerivative(x)

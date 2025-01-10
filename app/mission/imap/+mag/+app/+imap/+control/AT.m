@@ -7,6 +7,7 @@ classdef AT < mag.app.Control & mag.app.mixin.Filter
 
     properties (SetAccess = private)
         Layout matlab.ui.container.GridLayout
+        SpectrogramCheckBox matlab.ui.control.CheckBox
         PSDCheckBox matlab.ui.control.CheckBox
         PSDStartDatePicker matlab.ui.control.DatePicker
         PSDStartTimeField matlab.ui.control.EditField
@@ -22,15 +23,17 @@ classdef AT < mag.app.Control & mag.app.mixin.Filter
             % Filter.
             this.addFilterButtons(this.Layout, StartFilterRow = 1);
 
-            % PSD.
-            psdLabel = uilabel(this.Layout, Text = "Show PSD:");
-            psdLabel.Layout.Row = 2;
-            psdLabel.Layout.Column = 1;
+            % Spectrogram.
+            this.SpectrogramCheckBox = uicheckbox(this.Layout, Value = 1, ...
+                Text = "Spectrogram");
+            this.SpectrogramCheckBox.Layout.Row = 2;
+            this.SpectrogramCheckBox.Layout.Column = 2;
 
-            this.PSDCheckBox = uicheckbox(this.Layout, Value = 1, Text = "", ...
+            % PSD.
+            this.PSDCheckBox = uicheckbox(this.Layout, Value = 1, Text = "PSD", ...
                 ValueChangedFcn = @(~, ~) this.psdCheckboxChanged());
             this.PSDCheckBox.Layout.Row = 2;
-            this.PSDCheckBox.Layout.Column = 2;
+            this.PSDCheckBox.Layout.Column = 3;
 
             % PSD start date.
             psdStartLabel = uilabel(this.Layout, Text = "PSD start date/time:");
@@ -82,7 +85,8 @@ classdef AT < mag.app.Control & mag.app.mixin.Filter
 
             command = mag.app.Command(Functional = @mag.imap.view.sftPlots, ...
                 PositionalArguments = {results}, ...
-                NamedArguments = struct(Filter = startFilter, PSDStart = psdStartTime, PSDDuration = psdDuration));
+                NamedArguments = struct(Filter = startFilter, PSDStart = psdStartTime, PSDDuration = psdDuration, ...
+                Spectrogram = this.SpectrogramCheckBox.Value));
         end
     end
 

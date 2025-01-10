@@ -5,6 +5,13 @@ classdef tBartingtonAnalysis < matlab.unittest.TestCase
         WorkingDirectory (1, 1) matlab.unittest.fixtures.WorkingFolderFixture
     end
 
+    methods (TestClassSetup)
+
+        function useMATLABR2024bOrAbove(testCase)
+            testCase.assumeTrue(matlabRelease().Release >= "R2024b", "Only MATLAB older than R2024b is supported for this test.");
+        end
+    end
+
     methods (TestMethodSetup)
 
         function setUpWorkingDirectory(testCase)
@@ -15,10 +22,6 @@ classdef tBartingtonAnalysis < matlab.unittest.TestCase
 
             [status, message] = copyfile(fullfile(testCase.WorkingDirectory.StartingFolder, "test_data", "bart"), fullfile(testCase.WorkingDirectory.Folder));
             testCase.assertTrue(status, sprintf("Copy of test data failed: %s", message));
-        end
-
-        function useMATLABR2024bOrAbove(testCase)
-            testCase.assumeTrue(matlabRelease().Release >= "R2024b", "Only MATLAB older than R2024b is supported for this test.");
         end
     end
 

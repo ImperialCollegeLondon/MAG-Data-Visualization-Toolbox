@@ -113,6 +113,8 @@ classdef (Sealed) DataVisualization < matlab.mixin.SetGet
                 mission mag.meta.Mission {mustBeScalarOrEmpty} = string.empty()
             end
 
+            unlockToolbar = app.ToolbarManager.lock(); %#ok<NASGU>
+
             % Ask which mission to load, if not provided.
             if isempty(mission)
 

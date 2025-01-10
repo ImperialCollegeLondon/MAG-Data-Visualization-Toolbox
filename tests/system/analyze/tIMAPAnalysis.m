@@ -5,6 +5,13 @@ classdef tIMAPAnalysis < matlab.unittest.TestCase
         WorkingDirectory (1, 1) matlab.unittest.fixtures.WorkingFolderFixture
     end
 
+    methods (TestClassSetup)
+
+        function useMATLABR2024bOrAbove(testCase)
+            testCase.assumeTrue(matlabRelease().Release >= "R2024b", "Only MATLAB older than R2024b is supported for this test.");
+        end
+    end
+
     methods (TestMethodSetup)
 
         function setUpWorkingDirectory(testCase)
@@ -27,18 +34,10 @@ classdef tIMAPAnalysis < matlab.unittest.TestCase
         % Test that full analysis returns expected results and data format.
         function fullAnalysis(testCase)
 
-            % Set up.
-            modes = [mag.meta.Mode.Normal, mag.meta.Mode.Burst, mag.meta.Mode.Normal, mag.meta.Mode.Burst, mag.meta.Mode.Normal];
-            primaryDataFrequencies = [2, 64, 2, 128, 2];
-            secondaryDataFrequencies = [2, 8, 2, 128, 2];
-            packetFrequencies = [8, 4, 8, 2, 8];
-
-            expectedResults = load("results.mat", "results").results;
-
             % Exercise.
             analysis = testCase.verifyWarning(@() mag.imap.Analysis.start(Location = pwd()), "");
 
-            % Verify file names.
+            % Verify.
             testCase.verifySubstring(analysis.EventFileNames, "20240507_111204.html", "Event file names do not match.");
             testCase.verifySubstring(analysis.MetaDataFileNames, "IMAP - MAG.msg", "Meta data file names do not match.");
 
@@ -54,32 +53,8 @@ classdef tIMAPAnalysis < matlab.unittest.TestCase
             testCase.verifyEmpty(analysis.HKFileNames{4}, "HK file names do not match.");
             testCase.verifySubstring(analysis.HKFileNames{5}, "idle_export_stat.MAG_HSK_STATUS_20240507_111151.csv", "HK file names do not match.");
 
-            % Verify modes.
-            results = analysis.getAllModes();
-            testCase.assertNumElements(results, 5, "5 modes should exist.");
-
-            for i = 1:5
-
-                % Verify meta data.
-                testCase.verifyEqual(results(i).Primary.MetaData.Mode, modes(i), "Mode does not match expectation.");
-                testCase.verifyEqual(results(i).Secondary.MetaData.Mode, modes(i), "Mode does not match expectation.");
-
-                testCase.verifyEqual(results(i).Primary.MetaData.DataFrequency, primaryDataFrequencies(i), "Data frequency does not match expectation.");
-                testCase.verifyEqual(results(i).Secondary.MetaData.DataFrequency, secondaryDataFrequencies(i), "Data frequency does not match expectation.");
-
-                testCase.verifyEqual(results(i).Primary.MetaData.PacketFrequency, packetFrequencies(i), "Packet frequency does not match expectation.");
-                testCase.verifyEqual(results(i).Secondary.MetaData.PacketFrequency, packetFrequencies(i), "Packet frequency does not match expectation.");
-
-                % Verify time range.
-                testCase.assertLessThanOrEqual(results(i).TimeRange - expectedResults(i).TimeRange, milliseconds(1), "Time range does not match expectation.");
-
-                % Verify science.
-                for j = 1:2
-                    testCase.verifyEqual(results(i).Science(j).Data, expectedResults(i).Science(j).Data, "Analysis results should match expectation.");
-                end
-            end
+            testCase.assertNotEmpty(analysis.Results, "Results should not be empty.");
+            testCase.verifyEqualsBaseline(analysis.Results, matlabtest.baselines.MATFileBaseline("results.mat", VariableName = "results"));
         end
     end
 end
-
-

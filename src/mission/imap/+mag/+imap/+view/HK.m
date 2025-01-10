@@ -29,7 +29,7 @@ classdef HK < mag.graphics.view.View
             % Power HK.
             pwr = this.Results.HK.getHKType("PW");
 
-            if ~isempty(pwr) && pwr.HasData
+            if pwr.isPlottable()
 
                 % HK time series.
                 this.Figures(1) = this.Factory.assemble( ...
@@ -96,7 +96,7 @@ classdef HK < mag.graphics.view.View
             % Science HK.
             sid5 = this.Results.HK.getHKType("SCI");
 
-            if ~isempty(sid5)
+            if sid5.isPlottable()
 
                 sid5FOBTable = timetable(sid5.FOBT, sid5.ActivePrimaryRate, sid5.FOBRange, sid5.Compression, VariableNames = ["Rate", "Range", "Compression"]);
                 sid5FOBTable(isnat(sid5FOBTable.Time), :) = [];
@@ -125,7 +125,7 @@ classdef HK < mag.graphics.view.View
             sid15 = this.Results.HK.getHKType("SID15");
             procstat = this.Results.HK.getHKType("PROCSTAT");
 
-            if ~isempty(sid15) && ~isempty(procstat)
+            if sid15.isPlottable() && procstat.isPlottable()
 
                 drt = sid15.get("FOBDataReadyTime", "FIBDataReadyTime");
                 drt = timetable(sid15.Time, 1000 * (drt(:, 1) - drt(:, 2)), VariableNames = "Difference");

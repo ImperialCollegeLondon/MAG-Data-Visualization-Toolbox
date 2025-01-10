@@ -145,7 +145,7 @@ classdef tField < MAGViewTestCase
             expectedInputs{4} = mag.graphics.style.Stackedplot(Title = options.SecondaryTitle, YLabels = ["x [nT]", "y [nT]", "z [nT]", "|B| [nT]"], YAxisLocation = "right", Layout = [3, 1], ...
                 Charts = mag.graphics.chart.Stackedplot(YVariables = ["X", "Y", "Z", "B"], Filter = instrument.Science(1).Quality.isPlottable()));
 
-            if instrument.HasHK
+            if instrument.HasHK && any(instrument.HK.isPlottable())
 
                 expectedInputs{5} = instrument.HK(1);
                 expectedInputs{6} = [ ...

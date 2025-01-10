@@ -57,9 +57,8 @@ classdef (Abstract) VisualizationManager < mag.app.manage.Manager
 
     methods (Abstract)
 
-        % GETVISUALIZATIONTYPES Retrieve types and classes of visualization
-        % supported.
-        items = getVisualizationTypesAndClasses(this, model)
+        % GETSUPPORTEDVISUALIZATIONS Retrieve supported visualization classes.
+        supportedVisualizations = getSupportedVisualizations(this, model)
 
         % VISUALIZE Visualize analysis using selected view.
         figures = visualize(this, analysis)
@@ -87,10 +86,28 @@ classdef (Abstract) VisualizationManager < mag.app.manage.Manager
 
         function setVisualizationTypesAndClasses(this, model)
 
-            [items, itemsData] = this.getVisualizationTypesAndClasses(model);
+            supportedVisualizations = this.getSupportedVisualizations(model);
+            itemsData = mag.app.Control.empty();
 
-            [items, idxSorted] = sort(items);
-            itemsData = itemsData(idxSorted);
+            if ~isempty(model) && model.HasAnalysis
+
+                for sv = supportedVisualizations
+
+                    if sv.isSupported(model.Analysis.Results)
+                        itemsData = [itemsData, sv]; %#ok<AGROW>
+                    end
+                end
+            end
+
+            if isempty(itemsData)
+                items = string.empty();
+            else
+
+                items = [itemsData.Name];
+
+                [items, idxSorted] = sort(items);
+                itemsData = itemsData(idxSorted);
+            end
 
             this.VisualizationTypeListBox.Items = items;
             this.VisualizationTypeListBox.ItemsData = itemsData;

@@ -57,7 +57,12 @@ classdef SelectMissionDialog < handle
             this.GridLayout = uigridlayout(this.Parent);
             this.GridLayout.ColumnWidth = ["1x", "2x", "1x"];
             this.GridLayout.RowHeight = ["2x", "1x", "2x"];
-            this.GridLayout.BackgroundColor = 0.98 * ones(1, 3);
+
+            if isprop(this.Parent, "Theme") && isequal(this.Parent.Theme.BaseColorStyle, "dark")
+                this.GridLayout.BackgroundColor = 0.02 * ones(1, 3);
+            else
+                this.GridLayout.BackgroundColor = 0.98 * ones(1, 3);
+            end
 
             % Create Panel.
             this.Panel = uipanel(this.GridLayout);

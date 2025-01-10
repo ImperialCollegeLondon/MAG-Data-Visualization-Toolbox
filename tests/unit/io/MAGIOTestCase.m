@@ -6,7 +6,7 @@ classdef (Abstract) MAGIOTestCase < matlab.unittest.TestCase
     end
 
     properties (Constant, Access = protected)
-        TestDataLocation (1, 1) string {mustBeFolder} = fullfile(fileparts(mfilename("fullpath")), "data")
+        TestDataLocation (1, 1) string {mustBeFolder} = fullfile(fileparts(mfilename("fullpath")), "test_data")
     end
 
     methods (TestMethodSetup)

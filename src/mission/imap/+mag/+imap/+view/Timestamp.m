@@ -58,7 +58,7 @@ classdef Timestamp < mag.graphics.view.View
                 WindowState = "maximized");
 
             % Plot difference in I-ALiRT timestamp.
-            if ~isempty(this.Results.IALiRT)
+            if this.Results.IALiRT.isPlottable()
 
                 primaryIALiRT = this.Results.IALiRT.Primary;
                 secondaryIALiRT = this.Results.IALiRT.Secondary;

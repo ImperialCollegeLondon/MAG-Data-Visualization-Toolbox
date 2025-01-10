@@ -7,34 +7,11 @@ classdef VisualizationManager < mag.app.manage.VisualizationManager
 
     methods
 
-        function [items, itemsData] = getVisualizationTypesAndClasses(~, model)
+        function supportedVisualizations = getSupportedVisualizations(~, ~)
 
-            arguments
-                ~
-                model mag.app.hs.Model {mustBeScalarOrEmpty}
-            end
-
-            itemsData = mag.app.Control.empty();
-
-            supportedControls = [mag.app.control.Field(@mag.hs.view.Field), ...
+            supportedVisualizations = [mag.app.control.Field(@mag.hs.view.Field), ...
                 mag.app.control.PSD(@mag.hs.view.PSD), ...
                 mag.app.control.Spectrogram(@mag.hs.view.Spectrogram)];
-
-            if ~isempty(model) && model.HasAnalysis
-
-                for c = supportedControls
-
-                    if c.isSupported(model.Analysis.Results)
-                        itemsData = [itemsData, c]; %#ok<AGROW>
-                    end
-                end
-            end
-
-            if ~isempty(itemsData)
-                items = [itemsData.Name];
-            else
-                items = string.empty();
-            end
         end
 
         function figures = visualize(this, analysis)

@@ -128,8 +128,13 @@ classdef (Abstract) Event < matlab.mixin.Heterogeneous & matlab.mixin.Copyable &
 
     methods (Hidden, Sealed)
 
-        function timetableThis = timetable(this)
+        function timetableThis = timetable(this, options)
         % TIMETABLE Convert events to timetable.
+
+            arguments
+                this
+                options.FillMissing (1, 1) logical = true
+            end
 
             timetableThis = this.generateEmptyEventtable();
 
@@ -141,11 +146,9 @@ classdef (Abstract) Event < matlab.mixin.Heterogeneous & matlab.mixin.Copyable &
 
             timetableThis = sortrows(timetableThis);
 
-            fillVariables = intersect(["Mode", "PrimaryNormalRate", "SecondaryNormalRate", "PacketNormalFrequency", "PrimaryBurstRate", "SecondaryBurstRate", "PacketBurstFrequency", "Range"], timetableThis.Properties.VariableNames);
-            timetableThis(:, fillVariables) = fillmissing(timetableThis(:, fillVariables), "previous");
-
-            timetableThis{contains(timetableThis.Label, "Config"), ["PrimaryNormalRate", "SecondaryNormalRate", "PacketNormalFrequency", "PrimaryBurstRate", "SecondaryBurstRate", "PacketBurstFrequency", "Duration"]} = missing();
-            timetableThis{contains(timetableThis.Label, "Ramp"), "Range"} = missing();
+            if options.FillMissing
+                timetableThis = this.fillMissingDetails(timetableThis);
+            end
 
             timetableThis.Reason = repmat("Command", height(timetableThis), 1);
         end
@@ -153,7 +156,7 @@ classdef (Abstract) Event < matlab.mixin.Heterogeneous & matlab.mixin.Copyable &
         function eventtableThis = eventtable(this)
         % EVENTTABLE Convert events to eventtable.
 
-            eventtableThis = this.timetable();
+            eventtableThis = this.timetable(FillMissing = false);
 
             locTimedCommand = ~ismissing(eventtableThis.Duration) & (eventtableThis.Duration ~= 0);
             idxTimedCommand = find(locTimedCommand);
@@ -177,6 +180,8 @@ classdef (Abstract) Event < matlab.mixin.Heterogeneous & matlab.mixin.Copyable &
 
             eventtableThis = sortrows(eventtableThis);
             eventtableThis = eventtable(eventtableThis, EventLabelsVariable = "Label");
+
+            eventtableThis = this.fillMissingDetails(eventtableThis);
         end
     end
 
@@ -211,6 +216,18 @@ classdef (Abstract) Event < matlab.mixin.Heterogeneous & matlab.mixin.Copyable &
                 timestamps = datetime.empty();
                 timestamps.TimeZone = mag.time.Constant.TimeZone;
             end
+        end
+    end
+
+    methods (Static, Access = private)
+
+        function tableThis = fillMissingDetails(tableThis)
+
+            fillVariables = intersect(["Mode", "PrimaryNormalRate", "SecondaryNormalRate", "PacketNormalFrequency", "PrimaryBurstRate", "SecondaryBurstRate", "PacketBurstFrequency", "Range"], tableThis.Properties.VariableNames);
+            tableThis(:, fillVariables) = fillmissing(tableThis(:, fillVariables), "previous");
+
+            tableThis{contains(tableThis.Label, "Config"), ["PrimaryNormalRate", "SecondaryNormalRate", "PacketNormalFrequency", "PrimaryBurstRate", "SecondaryBurstRate", "PacketBurstFrequency", "Duration"]} = missing();
+            tableThis{contains(tableThis.Label, "Ramp"), "Range"} = missing();
         end
     end
 end

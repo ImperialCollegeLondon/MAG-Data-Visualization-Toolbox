@@ -151,7 +151,7 @@ classdef tHK < matlab.unittest.TestCase
         function dependentProperties(~, HKTypes)
 
             % Set up.
-            fileName = fullfile(fileparts(mfilename("fullpath")), "data", HKTypes + ".csv");
+            fileName = fullfile(fileparts(mfilename("fullpath")), "test_data", HKTypes + ".csv");
 
             hk = readtimetable(fileName);
             hk.Properties.DimensionNames{1} = 't';

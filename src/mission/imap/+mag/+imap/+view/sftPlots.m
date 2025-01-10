@@ -7,6 +7,7 @@ function figures = sftPlots(analysis, options)
         options.Filter duration {mustBeScalarOrEmpty} = duration.empty()
         options.PSDStart datetime {mustBeScalarOrEmpty} = datetime.empty()
         options.PSDDuration (1, 1) duration = hours(1)
+        options.Spectrogram (1, 1) logical = true
         options.SeparateModes (1, 1) logical = true
     end
 
@@ -36,7 +37,10 @@ function figures = sftPlots(analysis, options)
     for m = modes
 
         views(end + 1) = mag.imap.view.Field(m);
-        views(end + 1) = mag.imap.view.Spectrogram(m);
+
+        if options.Spectrogram
+            views(end + 1) = mag.imap.view.Spectrogram(m);
+        end
 
         if ~isempty(options.PSDStart)
 
