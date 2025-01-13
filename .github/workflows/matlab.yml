@@ -59,7 +59,7 @@ jobs:
         with:
           tasks: package("${{ env.MAG_DATA_VISUALIZATION_VERSION }}")
       - name: Upload toolbox
-        uses: actions/upload-artifact@v4.5.0
+        uses: actions/upload-artifact@v4.6.0
         with:
           name: 'MAG Data Visualization.mltbx'
           path: artifacts
