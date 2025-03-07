@@ -2,10 +2,37 @@ classdef tEvent < matlab.unittest.TestCase
 % TEVENT Unit tests for "mag.event.Event" classes.
 
     properties (TestParameter)
+        TimestampTestData
         ModeChangeEventData
     end
 
     methods (Static, TestParameterDefinition)
+
+        function TimestampTestData = initializeTimestampTestData()
+
+            TimestampTestData{1} = struct( ...
+                Event = mag.event.ModeChange( ...
+                CommandTimestamp = datetime("yesterday", TimeZone = "UTC"), ...
+                CompleteTimestamp = datetime("tomorrow", TimeZone = "UTC")), ...
+                ExpectedTimestamp = datetime("tomorrow", TimeZone = "UTC"));
+
+            TimestampTestData{2} = struct( ...
+                Event = mag.event.ModeChange( ...
+                AcknowledgeTimestamp = datetime("today", TimeZone = "UTC"), ...
+                CompleteTimestamp = datetime("tomorrow", TimeZone = "UTC")), ...
+                ExpectedTimestamp = datetime("tomorrow", TimeZone = "UTC"));
+
+            TimestampTestData{3} = struct( ...
+                Event = mag.event.RangeChange( ...
+                CommandTimestamp = datetime("yesterday", TimeZone = "UTC"), ...
+                AcknowledgeTimestamp = datetime("today", TimeZone = "UTC")), ...
+                ExpectedTimestamp = datetime("today", TimeZone = "UTC"));
+
+            TimestampTestData{4} = struct( ...
+                Event = mag.event.RampMode( ...
+                CommandTimestamp = datetime("yesterday", TimeZone = "UTC")), ...
+                ExpectedTimestamp = datetime("yesterday", TimeZone = "UTC"));
+        end
 
         function ModeChangeEventData = initializeModeChangeEventData()
 
@@ -41,6 +68,14 @@ classdef tEvent < matlab.unittest.TestCase
     end
 
     methods (Test)
+
+        % Test that timestamp is retrieved correctly.
+        function timestamp(testCase, TimestampTestData)
+
+            % Exercise and verify.
+            testCase.verifyEqual(TimestampTestData.Event.Timestamp, TimestampTestData.ExpectedTimestamp, ...
+                "Timestamp should match expectation.");
+        end
 
         % Test that events are sorted based on completion time.
         function sort(testCase)
@@ -258,22 +293,6 @@ classdef tEvent < matlab.unittest.TestCase
             testCase.verifyEqual(et.Duration(3), 0, "Duration of auto event should match expectation.");
             testCase.verifyEqual(et.Label(3), "Normal (2, 2)", "Label of auto event should match expectation.");
             testCase.verifyEqual(et.Time(3), events(2).AcknowledgeTimestamp + seconds(events(2).Duration), "Auto event timestamps should match expectation.");
-        end
-
-        % Test that when event is empty, it returns an empty timestamp.
-        function getTimestamps_empty(testCase)
-
-            % Set up.
-            event = mag.event.Event.empty();
-
-            % Exercise.
-            timestamp = event.getTimestamps();
-
-            % Verify.
-            testCase.assertClass(timestamp, "datetime", "Timestamp should be ""datetime"".");
-
-            testCase.verifyEmpty(timestamp, "Timestamp should be empty.");
-            testCase.verifyEqual(timestamp.TimeZone, char(mag.time.Constant.TimeZone), "Timestamp should have expected time zone.");
         end
 
         % Test that dependent "active" properties of "ModeChange" select

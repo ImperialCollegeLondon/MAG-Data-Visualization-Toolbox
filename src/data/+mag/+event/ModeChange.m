@@ -18,6 +18,8 @@ classdef ModeChange < mag.event.Event
         PacketBurstFrequency (1, 1) double {mustBeMemberOrMissing(PacketBurstFrequency, [2, 4, 8])} = 4
         % DURATION Duration of burst mode.
         Duration (1, 1) double = 0
+        % MODECHANGETIMESTAMP Timestamp of completion.
+        ModeChangeTimestamp (1, 1) datetime = NaT(TimeZone = "UTC")
     end
 
     properties (Dependent)
@@ -84,8 +86,21 @@ classdef ModeChange < mag.event.Event
             labels = compose("%s (%d, %d)", string([this.Mode]'), [this.ActivePrimaryRate]', [this.ActiveSecondaryRate]');
 
             tableThis = timetable(string([this.Mode]), [this.PrimaryNormalRate], [this.SecondaryNormalRate], [this.PacketNormalFrequency], [this.PrimaryBurstRate], [this.SecondaryBurstRate], [this.PacketBurstFrequency], [this.Duration], labels, ...
-                RowTimes = this.getTimestamps(), VariableNames = ["Mode", "PrimaryNormalRate", "SecondaryNormalRate", "PacketNormalFrequency", "PrimaryBurstRate", "SecondaryBurstRate", "PacketBurstFrequency", "Duration", "Label"]);
+                RowTimes = [this.Timestamp], VariableNames = ["Mode", "PrimaryNormalRate", "SecondaryNormalRate", "PacketNormalFrequency", "PrimaryBurstRate", "SecondaryBurstRate", "PacketBurstFrequency", "Duration", "Label"]);
         end
+
+        % function timestamp = getTimestamp(this)
+
+        %     arguments
+        %         this mag.event.ModeChange {mustBeScalarOrEmpty}
+        %     end
+
+        %     timestamp = this.ModeChangeTimestamp;
+
+        %     if ismissing(timestamp)
+        %         timestamp = getTimestamp@mag.event.Event(this);
+        %     end
+        % end
     end
 end
 

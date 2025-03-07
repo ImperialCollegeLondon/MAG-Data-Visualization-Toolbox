@@ -224,7 +224,7 @@ function events = findModeChanges(data, events, name)
         events(find(diff(events.DataFrequency) == 0) + 1, :) = [];
     else
 
-        searchWindow = seconds(15);
+        searchWindow = seconds(30);
         data = sortrows(data);
 
         % Update timestamps for mode changes.
@@ -235,6 +235,9 @@ function events = findModeChanges(data, events, name)
             % Find window around event and compute actual timestamp difference.
             t = events.Time(i);
             eventWindow = data(withtol(t, searchWindow), :);
+            
+            % Remove artificial timestamps.
+            eventWindow = eventWindow(eventWindow.quality.isScience(), :);
 
             if isempty(eventWindow)
                 continue;
@@ -243,7 +246,9 @@ function events = findModeChanges(data, events, name)
             dt = seconds(diff(eventWindow.(timeColumn)));
             ddt = diff(dt);
 
-            if all(ddt < 1e-3)
+            if all(ddt == 0)
+                events.Time(i) = eventWindow.t(1);
+            elseif all(ddt < 1e-3)
 
                 if seconds(t - eventWindow.t(1)) < 1.5
                     events.Time(i) = eventWindow.t(1);

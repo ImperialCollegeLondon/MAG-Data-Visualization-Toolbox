@@ -23,7 +23,7 @@ function loadEventsData(this)
     rangeChangeFormat = ", RANGE_ID=RANGE(?<range>\d+), RANGE_GAINX=GAIN(?<x>\d+), RANGE_GAINY=GAIN(?<y>\d+), RANGE_GAINZ=GAIN(?<z>\d+)";
     rampModeFormat = "";
 
-    %% Convert Events
+    %% Convert Mode Events
 
     events = mag.event.Event.empty();
 
@@ -90,6 +90,33 @@ function loadEventsData(this)
             Duration = eventDetails.duration); %#ok<AGROW>
     end
 
+    %% Mode Transition Events
+
+    locTransition = [rawEvents.command] == "MAG_PROG_MTRAN";
+
+    for te = rawEvents(locTransition)
+
+        responsePattern = getResponsePattern(te.details);
+        eventDetails = regexp(te.details, responsePattern, "names", "all");
+
+        modeChangeTimestamp = datetime(te.timestamp, Format = eventTimeFormat, TimeZone = "UTC");
+        matchingEvents = events((double([events.Mode]) == str2double(eventDetails.curr)) & ...
+            ([events.CommandTimestamp] <= modeChangeTimestamp));
+
+        if ~isempty(matchingEvents)
+
+            matchingEvents = sort(matchingEvents);
+
+            if ismissing(matchingEvents(end).ModeChangeTimestamp)
+                matchingEvents(end).ModeChangeTimestamp = modeChangeTimestamp;
+            else
+                % TODO: could be an automated transition
+            end
+        end
+    end
+
+    %% Convert Other Events
+
     % Identify range changes.
     locRange = matches([rawEvents.command], regexpPattern("MAG_FEE_F(O|I)BRNG"));
 
@@ -137,7 +164,8 @@ function loadEventsData(this)
         for i = 1:numel(acknowledgeEvents)
 
             acknowledgeEvents(i).timestamp = datetime(acknowledgeEvents(i).timestamp, Format = eventTimeFormat, TimeZone = "UTC");
-            acknowledgeEvents(i).coarse = datetime(mag.time.Constant.Epoch + str2double(acknowledgeEvents(i).coarse), ConvertFrom = "posixtime", TimeZone = mag.time.Constant.TimeZone);
+            acknowledgeEvents(i).coarse = datetime(mag.time.Constant.Epoch + str2double(acknowledgeEvents(i).coarse), ConvertFrom = "posixtime", ...
+                Format = eventTimeFormat, TimeZone = mag.time.Constant.TimeZone);
         end
     end
 
@@ -163,7 +191,8 @@ function loadEventsData(this)
         for i = 1:numel(completedEvents)
 
             completedEvents(i).timestamp = datetime(completedEvents(i).timestamp, Format = eventTimeFormat, TimeZone = "UTC");
-            completedEvents(i).coarse = datetime(mag.time.Constant.Epoch + str2double(completedEvents(i).coarse), ConvertFrom = "posixtime", TimeZone = mag.time.Constant.TimeZone);
+            completedEvents(i).coarse = datetime(mag.time.Constant.Epoch + str2double(completedEvents(i).coarse), ConvertFrom = "posixtime", ...
+                Format = eventTimeFormat, TimeZone = mag.time.Constant.TimeZone);
         end
     end
 
@@ -214,8 +243,8 @@ function loadEventsData(this)
             end
         end
 
-        if ~isempty(correction) && isfinite(correction)
-            e.CommandTimestamp = e.CommandTimestamp + mean(correction);
+        if ~isempty(correction) && any(isfinite(correction))
+            e.CommandTimestamp = e.CommandTimestamp + mean(correction, "omitmissing");
         end
     end
 
@@ -259,11 +288,12 @@ end
 
 function responsePattern = getResponsePattern(response)
 
-    persistent responsePattern14 responsePattern17
+    persistent responsePattern14 responsePattern16 responsePattern17
 
-    if isempty(responsePattern14) || isempty(responsePattern17)
+    if isempty(responsePattern14) || isempty(responsePattern16) || isempty(responsePattern17)
 
         responsePattern14 = "All data =\[\d+, \d+, \d+, \d+, \d+, \d+, \d+, (?<coarse>\d+), \d+, \d+, \d+, \d+, \d+, (?:\d+/\d+/\d+ \d+:\d+:\d+:\w+ :: )?\d+, \d+\]";
+        responsePattern16 = "All data =\[\d+, \d+, \d+, \d+, \d+, \d+, \d+, (?<coarse>\d+), \d+, \d+, \d+, \d+, (?:[\w\/: ]+ :: )?\d+, (?:[\w\/: ]+ :: )?(?<event>\d+), (?<prev>\d+), (?<curr>\d+), (?<trans>\d+)\]";
         responsePattern17 = "All data =\[\d+, \d+, \d+, \d+, \d+, \d+, \d+, (?<coarse>\d+), \d+, \d+, \d+, \d+, \d+, (?:\d+/\d+/\d+ \d+:\d+:\d+:\w+ :: )?\d+, \d+, \d+, (?<type>\d+), (?<subtype>\d+)\]";
     end
 
@@ -272,6 +302,8 @@ function responsePattern = getResponsePattern(response)
     switch commaCount
         case 14
             responsePattern = responsePattern14;
+        case 16
+            responsePattern = responsePattern16;
         case 17
             responsePattern = responsePattern17;
         otherwise

@@ -14,12 +14,24 @@ classdef (Abstract) Event < matlab.mixin.Heterogeneous & matlab.mixin.Copyable &
         SubType (1, 1) double
     end
 
+    properties (Dependent)
+        % TIMESTAMP Most accurate timestamp of event.
+        Timestamp (1, 1) datetime
+    end
+
+    methods
+
+        function timestamp = get.Timestamp(this)
+            timestamp = this.getTimestamp();
+        end
+    end
+
     methods (Sealed)
 
         function sortedThis = sort(this, varargin)
         % SORT Override default sorting algorithm.
 
-            [~, idxSort] = sort([this.CompleteTimestamp], varargin{:});
+            [~, idxSort] = sort([this.Timestamp], varargin{:});
             sortedThis = this(idxSort);
         end
 
@@ -31,7 +43,7 @@ classdef (Abstract) Event < matlab.mixin.Heterogeneous & matlab.mixin.Copyable &
             end
 
             % Crop events.
-            timestamps = this.getTimestamps();
+            timestamps = [this.Timestamp];
             [startTime, endTime] = this.convertToStartEndTime(timeFilter, timestamps);
 
             if ismissing(startTime) || ismissing(endTime) || (startTime >= endTime)
@@ -57,7 +69,7 @@ classdef (Abstract) Event < matlab.mixin.Heterogeneous & matlab.mixin.Copyable &
             % Find the earliest previous mode and range changes.
             lastEvents = mag.event.Event.empty();
 
-            if isempty(this) | (min(this.getTimestamps()) > startTime)
+            if isempty(this) || (min([this.Timestamp]) > startTime)
 
                 for i = eventTypes
                     lastEvents = [lastEvents, croppedEvents(find([croppedEvents.Type] == i, 1, "last"))]; %#ok<AGROW>
@@ -80,7 +92,7 @@ classdef (Abstract) Event < matlab.mixin.Heterogeneous & matlab.mixin.Copyable &
 
                     if (e.Duration > 0) && isequal(e.Mode, "Burst")
 
-                        locNextMode = (newEvents.Time > e.getTimestamps()) & contains(newEvents.Label, "(" | ")");
+                        locNextMode = (newEvents.Time > e.Timestamp) & contains(newEvents.Label, "(" | ")");
                         nextModeTime = newEvents.Time(find(locNextMode, 1, "first"));
 
                         e.Duration = seconds(nextModeTime - startTime);
@@ -188,28 +200,30 @@ classdef (Abstract) Event < matlab.mixin.Heterogeneous & matlab.mixin.Copyable &
         tableThis = convertToTimeTable(this)
     end
 
-    methods (Sealed)
+    methods (Access = protected)
 
-        function timestamps = getTimestamps(this)
-        % GETTIMESTAMPS Get timestamps of events, with following priority:
+        function timestamp = getTimestamp(this)
+        % GETTIMESTAMP Get timestamps of events, with following priority:
         % if completion time is missing, use acknowledgment time, if that
         % is also missing, use command time.
 
-            timestamps = [this.CompleteTimestamp];
-            locMissing = ismissing(timestamps);
+            arguments
+                this mag.event.Event {mustBeScalarOrEmpty}
+            end
 
-            if any(locMissing)
+            timestamp = this.CompleteTimestamp;
 
-                timestamps(locMissing) = [this(locMissing).AcknowledgeTimestamp];
-                locMissing = ismissing(timestamps);
-            
-                if any(locMissing)
-                    timestamps(locMissing) = this(locMissing).CommandTimestamp;
+            if ismissing(timestamp)
+
+                timestamp = this.AcknowledgeTimestamp;
+
+                if ismissing(timestamp)
+                    timestamp = this.CommandTimestamp;
                 end
             end
 
-            if isempty(timestamps)
-                timestamps = mag.time.emptyTime();
+            if isempty(timestamp)
+                timestamp = mag.time.emptyTime();
             end
         end
     end

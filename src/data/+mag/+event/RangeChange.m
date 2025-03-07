@@ -25,7 +25,7 @@ classdef RangeChange < mag.event.Event
         function tableThis = convertToTimeTable(this)
 
             labels = compose("%s Range %d", [this.Sensor]', [this.Range]');
-            tableThis = timetable([this.Range], string([this.Sensor]), labels, RowTimes = this.getTimestamps(), VariableNames = ["Range", "Sensor", "Label"]);
+            tableThis = timetable([this.Range], string([this.Sensor]), labels, RowTimes = [this.Timestamp], VariableNames = ["Range", "Sensor", "Label"]);
         end
     end
 end
