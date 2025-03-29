@@ -64,7 +64,7 @@ classdef JSON < mag.imap.meta.Provider
             end
         end
     end
-    
+
     methods (Static, Access = private)
 
         function valid = isValidJSON(fileName)

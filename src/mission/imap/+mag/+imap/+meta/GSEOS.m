@@ -9,14 +9,11 @@ classdef GSEOS < mag.imap.meta.Provider
         % FORMATS Formats to use to load data.
         Formats (1, :) string = ["%C", "%{MM/dd/yy}D", "%{hh:mm:ss.SSS}T", "%C", "%f", "%f", "%q"]
         % METADATAPATTERN Regex pattern to extract metadata from log.
-        MetadataPattern (:, 1) string = ["^Test Name: (?<name>.*)$", ...
-            "^Operators: (?<operator>.*)$", ...
-            "^(?<cpt>.*)$", ...
-            "^.*$", ...
-            "^BSW:\s*(?<bsw>.*)$", ...
-            "^ASW:\s*(?<asw>.*)$", ...
-            "^GSE:\s*(?<gse>.*)$", ...
-            "^GSEOS:\s*(?<gseos>.*)$"]
+        MetadataPattern (:, 1) string = [ ...
+            "BSW:\s*(?<bsw>.*)", ...
+            "ASW:\s*(?<asw>.*)", ...
+            "GSE:\s*(?<gse>.*)", ...
+            "GSEOS:\s*(?<gseos>.*)"]
     end
 
     methods
@@ -30,7 +27,7 @@ classdef GSEOS < mag.imap.meta.Provider
 
             [~, ~, extension] = fileparts(fileName);
 
-            supported = isfile(fileName) && ismember(extension, this.Extensions);
+            supported = isfile(fileName) && ismember(extension, this.Extensions) && this.isValidGSEOS(fileName);
         end
 
         function load(this, fileName, instrumentMetadata, ~, ~)
@@ -43,8 +40,7 @@ classdef GSEOS < mag.imap.meta.Provider
                 ~
             end
 
-            dataStore = tabularTextDatastore(fileName, FileExtensions = this.Extensions, TextType = "string", VariableNames = this.Names, TextscanFormats = this.Formats);
-            rawData = dataStore.readall(UseParallel = mag.internal.useParallel());
+            rawData = this.readGSEOS(fileName);
 
             if isempty(rawData)
                 return;
@@ -62,12 +58,13 @@ classdef GSEOS < mag.imap.meta.Provider
             end
 
             % Assign instrument metadata.
+            instrumentMetadata.Mission = mag.meta.Mission.IMAP;
             instrumentMetadata.Timestamp = timestamp;
 
             if contains(messages, "CPT", IgnoreCase = true)
 
                 model = regexp(messages, "^MAG_PROG_BTSUCC HW_MODEL = (.*)$", "tokens", "once", "dotexceptnewline", "lineanchors");
-                genericData = regexp(messages, join(this.MetadataPattern, "\s*"), "names", "dotexceptnewline", "lineanchors");
+                genericData = regexp(messages, join(this.MetadataPattern, "[\s\S]*?"), "names", "dotexceptnewline", "lineanchors");
 
                 if isempty(genericData)
                     return;
@@ -76,9 +73,28 @@ classdef GSEOS < mag.imap.meta.Provider
                 instrumentMetadata.Model = model;
                 instrumentMetadata.BSW = genericData.bsw;
                 instrumentMetadata.ASW = genericData.asw;
-                instrumentMetadata.Operator = genericData.operator;
-                instrumentMetadata.Description = genericData.name;
+                instrumentMetadata.GSE = genericData.gse;
             end
+        end
+    end
+
+    methods (Access = private)
+
+        function valid = isValidGSEOS(this, fileName)
+
+            try
+
+                this.readGSEOS(fileName);
+                valid = true;
+            catch
+                valid = false;
+            end
+        end
+
+        function rawData = readGSEOS(this, fileName)
+
+            dataStore = tabularTextDatastore(fileName, FileExtensions = this.Extensions, TextType = "string", VariableNames = this.Names, TextscanFormats = this.Formats);
+            rawData = dataStore.readall(UseParallel = mag.internal.useParallel());
         end
     end
 end

@@ -9,7 +9,9 @@ function date = decodeDate(date)
         date datetime {mustBeScalarOrEmpty}
     end
 
-    formats = ["dd/MM/yyyy", "dd-MMM-yyyy", "dd-MM-yyyy"];
+    formats = ["dd-MMM-yyyy", "dd-MM-yyyy", "yyyy-MMM-dd", "yyyy-MM-dd"];
+    formats = horzcat(formats, replace(formats, "-", "/"));
+
     conversion = @(f) datetime(date, InputFormat = f);
 
     for f = formats
@@ -29,5 +31,5 @@ function date = decodeDate(date)
         end
     end
 
-    error("Unable to parse date '%s' using the formats %s.", date, join(compose("'%s'", formats), ", "));
+    error("mag:time:parseError", "Unable to parse date '%s' using the formats %s.", date, join(compose("'%s'", formats), ", "));
 end

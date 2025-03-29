@@ -47,6 +47,8 @@ classdef (Abstract) VisualizationManager < mag.app.manage.Manager
 
         function reset(this)
 
+            this.SelectedControl = mag.app.Control.empty();
+
             this.VisualizationTypeListBox.ValueIndex = [];
             this.VisualizationTypeListBox.Enable = "off";
             this.VisualizationOptionsPanel.Enable = "off";
@@ -56,6 +58,10 @@ classdef (Abstract) VisualizationManager < mag.app.manage.Manager
 
         function figures = visualize(this, analysis)
         % VISUALIZE Visualize analysis using selected view.
+
+            if isempty(this.SelectedControl)
+                error("mag:app:noViewSelected", "No view selected.");
+            end
 
             command = this.SelectedControl.getVisualizeCommand(analysis.Results);
 

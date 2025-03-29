@@ -51,12 +51,12 @@ classdef (Sealed) DataVisualization < matlab.mixin.SetGet
         AppNotificationHandler mag.app.internal.AppNotificationHandler {mustBeScalarOrEmpty}
     end
 
-    properties (Dependent, Access = private)
-        ResultsLocation (1, 1) string {mustBeFolder}
+    properties (SetObservable, SetAccess = private)
+        Figures (1, :) matlab.ui.Figure
     end
 
-    properties (SetObservable, Access = private)
-        Figures (1, :) matlab.ui.Figure
+    properties (Dependent, Access = private)
+        ResultsLocation (1, 1) string {mustBeFolder}
     end
 
     methods
