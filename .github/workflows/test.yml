@@ -21,7 +21,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v2.3.1
+        uses: matlab-actions/setup-matlab@v2.4.0
         with:
           release: ${{ matrix.release }}
           products: MATLAB_Test Signal_Processing_Toolbox Statistics_and_Machine_Learning_Toolbox Text_Analytics_Toolbox Wavelet_Toolbox
